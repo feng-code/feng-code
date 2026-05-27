@@ -1,0 +1,34 @@
+.extra-theme-btn {
+  position: relative;
+  gap: 7px !important;
+}
+
+.theme-dot {
+  width: 11px;
+  height: 11px;
+  display: inline-block;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255,255,255,.75), transparent 34%),
+    var(--dot);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dot) 16%, transparent);
+}
+
+.extra-theme-btn.active {
+  border-color: var(--accent) !important;
+  background: var(--accent-soft) !important;
+  color: var(--accent) !important;
+  font-weight: 800 !important;
+}
+
+.theme-list {
+  max-width: 520px;
+  justify-content: flex-end;
+}
+
+@media (max-width: 980px) {
+  .theme-list {
+    max-width: 100%;
+    justify-content: flex-start !important;
+  }
+}
