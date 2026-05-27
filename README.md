@@ -2,7 +2,7 @@
 
 嵌入式工程师的项目实战复盘博客。
 
-当前版本：**V1.4 易写作版**。
+当前版本：**V1.5.2 普通 Markdown 兼容版**。
 
 ## 定位
 
@@ -12,6 +12,8 @@
 
 - Markdown 文章写作
 - 自动扫描 `src/content/posts/*.md`
+- 兼容带 Front Matter 的文章
+- 兼容直接粘贴的普通 Markdown 长文
 - 一键生成文章模板
 - 精选文章
 - 专题系列
@@ -26,40 +28,11 @@
 - RSS / Sitemap / robots 自动生成
 - GitHub Pages 自动部署
 
-## 本地运行
+## 新增文章
 
-```bash
-npm install
-npm run dev
-```
+推荐使用 Front Matter，但现在也支持直接粘贴普通 Markdown 长文。
 
-## 新增文章：推荐方式
-
-运行：
-
-```bash
-npm run new:post -- "你的文章标题"
-```
-
-它会自动生成：
-
-```text
-src/content/posts/your-post-title.md
-```
-
-然后你只需要编辑这个 Markdown 文件即可。
-
-## 新增文章：手动方式
-
-也可以直接新增：
-
-```text
-src/content/posts/your-post-slug.md
-```
-
-不需要再修改 `src/content/posts.js`，系统会自动扫描 `posts` 目录下所有 `.md` 文件。
-
-文章模板：
+推荐模板：
 
 ```md
 ---
@@ -79,98 +52,12 @@ summary: 一句话说明这篇文章解决什么问题。
 ---
 
 ## 结论
-先给出核心判断。
-
-## 背景
-说明项目场景、问题现象、版本、复现条件。
-
-## 已知事实
-只写已经被源码、日志、报文或实验确认的信息。
-
-## 原因分析
-区分事实、推断、假设。
-
-## 最小修改方案
-说明改哪里、为什么、影响范围。
-
-## 验证方法
-列出日志、测试用例、通过标准。
-
-## 风险与复盘
-沉淀经验，避免下次重复踩坑。
+正文内容
 ```
 
 ## 发布更新
 
-修改或新增文章后：
-
-```bash
-git add .
-git commit -m "content: add new post"
-git push origin main
-```
-
-GitHub Actions 会自动：
-
-```text
-npm install
-npm run build
-生成 RSS / Sitemap / robots
-发布到 gh-pages 分支
-更新 GitHub Pages
-```
-
-## 构建
-
-```bash
-npm run build
-```
-
-构建前会自动执行：
-
-```bash
-node scripts/generate-feeds.js
-```
-
-自动生成：
-
-```text
-public/rss.xml
-public/sitemap.xml
-public/robots.txt
-```
-
-## 页面入口
-
-```text
-#/                  首页
-#/archive           归档
-#/about             关于
-#/projects          项目作品集
-#/roadmap           技术路线图
-#/series/rtos       RTOS 专题
-#/series/tbox       TBOX 专题
-#/series/driver     驱动与协议专题
-#/series/growth     成长专题
-```
-
-## 部署
-
-仓库已配置 GitHub Actions：
-
-```text
-.github/workflows/deploy.yml
-```
-
-推送到 `main` 后自动构建，并发布到 `gh-pages` 分支。
-
-GitHub Pages 设置：
-
-```text
-Source: Deploy from a branch
-Branch: gh-pages
-Folder: / root
-```
+修改或新增文章后提交到 `main`，GitHub Actions 会自动发布到 `gh-pages` 分支。
 
 访问地址：
 
