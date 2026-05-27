@@ -92,6 +92,8 @@ const extraThemes = [
 ];
 
 const EXTRA_THEME_KEY = "blog-extra-theme-id";
+let observerStarted = false;
+let pollTimer = null;
 
 function getBlogRoot() {
   return document.querySelector(".blog-app");
@@ -110,6 +112,7 @@ function applyExtraTheme(themeId) {
     button.classList.toggle("active", button.dataset.extraTheme === theme.id);
   });
 
+  root.dataset.extraTheme = theme.id;
   return true;
 }
 
@@ -118,6 +121,8 @@ function clearExtraTheme() {
   document.querySelectorAll(".theme-btn[data-extra-theme]").forEach((button) => {
     button.classList.remove("active");
   });
+  const root = getBlogRoot();
+  if (root) delete root.dataset.extraTheme;
 }
 
 function makeThemeButton(theme) {
@@ -125,7 +130,8 @@ function makeThemeButton(theme) {
   button.type = "button";
   button.className = "theme-btn extra-theme-btn";
   button.dataset.extraTheme = theme.id;
-  button.innerHTML = `<span class="theme-dot" style="--dot:${theme.accent}"></span>${theme.name}`;
+  button.setAttribute("aria-label", `切换到${theme.name}主题`);
+  button.innerHTML = `<span class="theme-dot" style="--dot:${theme.accent}"></span><span>${theme.name}</span>`;
   button.addEventListener("click", () => {
     localStorage.setItem(EXTRA_THEME_KEY, theme.id);
     applyExtraTheme(theme.id);
@@ -135,7 +141,7 @@ function makeThemeButton(theme) {
 
 function ensureExtraThemeButtons() {
   const themeList = document.querySelector(".theme-list");
-  if (!themeList) return;
+  if (!themeList) return false;
 
   for (const theme of extraThemes) {
     if (!themeList.querySelector(`[data-extra-theme="${theme.id}"]`)) {
@@ -143,32 +149,56 @@ function ensureExtraThemeButtons() {
     }
   }
 
+  themeList.dataset.extendedThemes = "ready";
   const saved = localStorage.getItem(EXTRA_THEME_KEY);
   if (saved) applyExtraTheme(saved);
+  return true;
+}
+
+function startPollingUntilReady() {
+  let count = 0;
+  if (pollTimer) window.clearInterval(pollTimer);
+
+  pollTimer = window.setInterval(() => {
+    count += 1;
+    const ok = ensureExtraThemeButtons();
+    if (ok || count > 40) {
+      window.clearInterval(pollTimer);
+      pollTimer = null;
+    }
+  }, 250);
 }
 
 function bootThemeExtension() {
   ensureExtraThemeButtons();
+  startPollingUntilReady();
 
-  document.addEventListener("click", (event) => {
-    const button = event.target.closest?.(".theme-btn");
-    if (button && !button.dataset.extraTheme) {
-      clearExtraTheme();
-    }
-  });
+  if (!observerStarted) {
+    observerStarted = true;
 
-  const observer = new MutationObserver(() => {
-    ensureExtraThemeButtons();
-  });
+    document.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const button = target.closest(".theme-btn");
+      if (button && !button.dataset.extraTheme) {
+        clearExtraTheme();
+        window.setTimeout(ensureExtraThemeButtons, 0);
+      }
+    });
 
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-  });
+    const observer = new MutationObserver(() => {
+      ensureExtraThemeButtons();
+    });
 
-  window.addEventListener("hashchange", () => {
-    requestAnimationFrame(ensureExtraThemeButtons);
-  });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+
+    window.addEventListener("hashchange", () => {
+      requestAnimationFrame(ensureExtraThemeButtons);
+    });
+  }
 }
 
 if (document.readyState === "loading") {
@@ -176,3 +206,9 @@ if (document.readyState === "loading") {
 } else {
   bootThemeExtension();
 }
+
+window.__qingshanExtraThemes = {
+  themes: extraThemes,
+  apply: applyExtraTheme,
+  ensure: ensureExtraThemeButtons,
+};
