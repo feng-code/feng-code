@@ -4,8 +4,10 @@ import App from "./App.jsx";
 import "./design-system.css";
 import "./theme-extensions.css";
 import "./experience-enhancements.css";
+import "./search-enhancements.css";
 import "./theme-extensions.js";
 import "./experience-enhancements.js";
+import "./search-enhancements.js";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
