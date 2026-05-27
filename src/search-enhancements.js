@@ -96,14 +96,23 @@ function renderResults(posts, keyword) {
 
 function closeSearch() {
   document.querySelector(".search-overlay")?.classList.remove("open");
+  document.body.classList.remove("search-open");
 }
 
 async function openSearch() {
   ensureSearchOverlay();
+
+  // 搜索是最高优先级弹层，打开前先关闭主题面板，避免两个浮层叠在一起。
+  document.querySelector(".theme-picker")?.classList.remove("open");
+  document.querySelector(".theme-picker-trigger")?.setAttribute("aria-expanded", "false");
+
   const overlay = document.querySelector(".search-overlay");
   const input = document.querySelector(".search-input");
+
+  document.body.classList.add("search-open");
   overlay?.classList.add("open");
   input?.focus();
+
   const posts = await loadSearchIndex();
   renderResults(posts, input?.value || "");
 }
