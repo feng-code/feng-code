@@ -8,6 +8,9 @@ series: driver
 quality: 源码
 tags: [UART, DMA, 协议解析]
 minutes: 10
+featured: true
+audience: [正在写 UART DMA 接收的人, 遇到半包粘包错包的人]
+takeaways: [DMA/IDLE 和协议层边界, 流式解析验证用例]
 summary: DMA/IDLE 只负责搬运字节，不负责保证一帧完整。协议层必须处理半包、粘包、错包。
 ---
 
