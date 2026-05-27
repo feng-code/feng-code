@@ -160,7 +160,12 @@ function ensureSearchOverlay() {
     renderResults(posts, event.target.value);
   });
 
-  document.body.appendChild(overlay);
+  const appRoot = document.querySelector(".blog-app");
+  if (appRoot) {
+    appRoot.appendChild(overlay);
+  } else {
+    document.body.appendChild(overlay);
+  }
 }
 
 function bootSearchEnhancement() {
@@ -177,7 +182,10 @@ function bootSearchEnhancement() {
     if (event.key === "Escape") closeSearch();
   });
 
-  const observer = new MutationObserver(() => ensureSearchTrigger());
+  const observer = new MutationObserver(() => {
+    ensureSearchTrigger();
+    if (!document.querySelector(".search-overlay")) ensureSearchOverlay();
+  });
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
