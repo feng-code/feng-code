@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>青山技术札记</title>
+    <link>https://feng-code.github.io/feng-code/</link>
+    <description>嵌入式工程师的 RTOS、驱动、TBOX、系统架构实战笔记。</description>
+    <language>zh-CN</language>
+    <lastBuildDate>Wed, 27 May 2026 00:00:00 GMT</lastBuildDate>
+    <item>
+      <title>RTOS 多任务设计：事件、队列、状态机如何分层</title>
+      <link>https://feng-code.github.io/feng-code/#/posts/rtos-task-design</link>
+      <guid>https://feng-code.github.io/feng-code/#/posts/rtos-task-design</guid>
+      <pubDate>Wed, 27 May 2026 00:00:00 GMT</pubDate>
+      <description>从输入源、实时性、阻塞点、共享资源四个维度，拆解一个稳定 RTOS 业务框架的设计方法。</description>
+    </item>
+    <item>
+      <title>TBOX 低功耗链路复盘：唤醒信号不等于系统唤醒</title>
+      <link>https://feng-code.github.io/feng-code/#/posts/tbox-low-power-chain</link>
+      <guid>https://feng-code.github.io/feng-code/#/posts/tbox-low-power-chain</guid>
+      <pubDate>Fri, 22 May 2026 00:00:00 GMT</pubDate>
+      <description>把系统休眠、外设唤醒、总线使能、协议执行、云端上报拆成独立链路，避免误判。</description>
+    </item>
+    <item>
+      <title>UART DMA + IDLE 接收：为什么协议层还需要流式解析</title>
+      <link>https://feng-code.github.io/feng-code/#/posts/uart-dma-idle-parser</link>
+      <guid>https://feng-code.github.io/feng-code/#/posts/uart-dma-idle-parser</guid>
+      <pubDate>Mon, 18 May 2026 00:00:00 GMT</pubDate>
+      <description>DMA/IDLE 只负责搬运字节，不负责保证一帧完整。协议层必须处理半包、粘包、错包。</description>
+    </item>
+    <item>
+      <title>源码阅读方法：先抓结构体，再看谁赋值、谁读取</title>
+      <link>https://feng-code.github.io/feng-code/#/posts/source-reading-method</link>
+      <guid>https://feng-code.github.io/feng-code/#/posts/source-reading-method</guid>
+      <pubDate>Tue, 12 May 2026 00:00:00 GMT</pubDate>
+      <description>读源码不要只看接口名，先找核心结构体和调用链，再结合日志验证真实语义。</description>
+    </item>
+  </channel>
+</rss>
