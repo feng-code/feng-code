@@ -8,6 +8,9 @@ series: rtos
 quality: 架构
 tags: [RTOS, ThreadX, 状态机]
 minutes: 12
+featured: true
+audience: [正在设计 RTOS 多任务框架的人, 不清楚事件/队列/状态机边界的人]
+takeaways: [任务拆分判断框架, 队列/事件/状态机验证方法]
 summary: 从输入源、实时性、阻塞点、共享资源四个维度，拆解一个稳定 RTOS 业务框架的设计方法。
 ---
 
