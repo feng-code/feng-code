@@ -1,11 +1,15 @@
 {
   "name": "qingshan-blog",
   "private": true,
-  "version": "1.4.0",
+  "version": "1.5.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "new:post": "node scripts/new-post.js",
+    "new:debug": "node scripts/new-post.js --type=debug",
+    "new:source": "node scripts/new-post.js --type=source",
+    "new:arch": "node scripts/new-post.js --type=arch",
+    "new:tutorial": "node scripts/new-post.js --type=tutorial",
     "generate:feeds": "node scripts/generate-feeds.js",
     "prebuild": "node scripts/generate-feeds.js",
     "build": "vite build",
