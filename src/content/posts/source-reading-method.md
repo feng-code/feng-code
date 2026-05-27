@@ -8,6 +8,9 @@ series: growth
 quality: 方法
 tags: [源码阅读, 工程能力, 方法论]
 minutes: 7
+featured: false
+audience: [想提升源码阅读效率的人, 容易被变量名误导的人]
+takeaways: [结构体优先阅读法, 谁赋值谁读取追踪法]
 summary: 读源码不要只看接口名，先找核心结构体和调用链，再结合日志验证真实语义。
 ---
 
