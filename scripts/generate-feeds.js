@@ -5,8 +5,16 @@ const siteUrl = "https://feng-code.github.io/feng-code";
 const postsDir = path.resolve("src/content/posts");
 const publicDir = path.resolve("public");
 
+function normalizeMarkdown(markdown) {
+  return String(markdown ?? "")
+    .replace(/^\uFEFF/, "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .trim();
+}
+
 function parseFrontMatterValue(value) {
-  const v = value.trim();
+  const v = String(value ?? "").trim();
   if (/^\d+$/.test(v)) return Number(v);
   if (v === "true") return true;
   if (v === "false") return false;
@@ -20,10 +28,37 @@ function parseFrontMatterValue(value) {
   return v.replace(/^[\'\"]|[\'\"]$/g, "");
 }
 
-function parseMeta(markdown) {
-  const match = markdown.trim().match(/^---\n([\s\S]*?)\n---/);
-  if (!match) throw new Error("Missing front matter.");
-  const meta = {};
+function slugFromFile(file) {
+  return file.replace(/\.md$/i, "").trim();
+}
+
+function fallbackMeta(markdown, file) {
+  const lines = normalizeMarkdown(markdown).split("\n").map((line) => line.trim());
+  const title = lines.find((line) => line && line !== "---") || slugFromFile(file);
+  const summary = lines.find((line) => line && line !== title && line !== "---") || "这是一篇技术文章。";
+  return {
+    slug: slugFromFile(file),
+    title,
+    date: "2026-05-27",
+    updated: "2026-05-27",
+    category: "系统架构",
+    series: "rtos",
+    quality: "架构",
+    tags: ["RTOS", "架构", "多任务"],
+    minutes: 20,
+    summary,
+  };
+}
+
+function parseMeta(markdown, file) {
+  const normalized = normalizeMarkdown(markdown);
+  const match = normalized.match(/^---\n([\s\S]*?)\n---/);
+  if (!match) {
+    console.warn(`[generate-feeds] ${file} has no front matter, using fallback metadata.`);
+    return fallbackMeta(normalized, file);
+  }
+
+  const meta = fallbackMeta(normalized, file);
   match[1].split("\n").forEach((line) => {
     const idx = line.indexOf(":");
     if (idx > -1) {
@@ -48,13 +83,13 @@ function readPosts() {
     .filter((file) => file.endsWith(".md"))
     .map((file) => {
       const markdown = fs.readFileSync(path.join(postsDir, file), "utf-8");
-      return parseMeta(markdown);
+      return parseMeta(markdown, file);
     })
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 }
 
 function buildSitemap(posts) {
-  const staticUrls = ["/", "/#/archive", "/#/about", "/#/projects", "/#/roadmap", "/#/series/rtos", "/#/series/tbox", "/#/series/driver", "/#/series/growth"];
+  const staticUrls = ["/", "/write/", "/#/archive", "/#/about", "/#/projects", "/#/roadmap", "/#/series/rtos", "/#/series/tbox", "/#/series/driver", "/#/series/growth"];
   const postUrls = posts.map((post) => `/#/posts/${post.slug}`);
   const urls = [...staticUrls, ...postUrls];
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls
