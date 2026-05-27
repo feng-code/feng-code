@@ -2,7 +2,7 @@
 
 嵌入式工程师的项目实战复盘博客。
 
-当前版本：**V1.3 内容运营与增长版**。
+当前版本：**V1.4 易写作版**。
 
 ## 定位
 
@@ -11,6 +11,8 @@
 ## 已有能力
 
 - Markdown 文章写作
+- 自动扫描 `src/content/posts/*.md`
+- 一键生成文章模板
 - 精选文章
 - 专题系列
 - 推荐阅读路径
@@ -31,33 +33,31 @@ npm install
 npm run dev
 ```
 
-## 构建
+## 新增文章：推荐方式
+
+运行：
 
 ```bash
-npm run build
+npm run new:post -- "你的文章标题"
 ```
 
-构建前会自动执行：
-
-```bash
-node scripts/generate-feeds.js
-```
-
-自动生成：
+它会自动生成：
 
 ```text
-public/rss.xml
-public/sitemap.xml
-public/robots.txt
+src/content/posts/your-post-title.md
 ```
 
-## 新增文章
+然后你只需要编辑这个 Markdown 文件即可。
 
-在目录中新增 Markdown 文件：
+## 新增文章：手动方式
+
+也可以直接新增：
 
 ```text
 src/content/posts/your-post-slug.md
 ```
+
+不需要再修改 `src/content/posts.js`，系统会自动扫描 `posts` 目录下所有 `.md` 文件。
 
 文章模板：
 
@@ -100,7 +100,45 @@ summary: 一句话说明这篇文章解决什么问题。
 沉淀经验，避免下次重复踩坑。
 ```
 
-然后在 `src/content/posts.js` 中导入并加入 `postSources`。
+## 发布更新
+
+修改或新增文章后：
+
+```bash
+git add .
+git commit -m "content: add new post"
+git push origin main
+```
+
+GitHub Actions 会自动：
+
+```text
+npm install
+npm run build
+生成 RSS / Sitemap / robots
+发布到 gh-pages 分支
+更新 GitHub Pages
+```
+
+## 构建
+
+```bash
+npm run build
+```
+
+构建前会自动执行：
+
+```bash
+node scripts/generate-feeds.js
+```
+
+自动生成：
+
+```text
+public/rss.xml
+public/sitemap.xml
+public/robots.txt
+```
 
 ## 页面入口
 
@@ -124,9 +162,17 @@ summary: 一句话说明这篇文章解决什么问题。
 .github/workflows/deploy.yml
 ```
 
-推送到 `main` 后自动部署到 GitHub Pages。
+推送到 `main` 后自动构建，并发布到 `gh-pages` 分支。
 
-预计访问地址：
+GitHub Pages 设置：
+
+```text
+Source: Deploy from a branch
+Branch: gh-pages
+Folder: / root
+```
+
+访问地址：
 
 ```text
 https://feng-code.github.io/feng-code/
