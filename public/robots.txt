@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://feng-code.github.io/feng-code/sitemap.xml
