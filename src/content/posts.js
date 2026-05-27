@@ -6,6 +6,8 @@ import sourceReadingMethod from "./posts/source-reading-method.md?raw";
 function parseFrontMatterValue(value) {
   const v = value.trim();
   if (/^\d+$/.test(v)) return Number(v);
+  if (v === "true") return true;
+  if (v === "false") return false;
   if (v.startsWith("[") && v.endsWith("]")) {
     return v
       .slice(1, -1)
