@@ -1,0 +1,407 @@
+/* V1.7 Premium Blog Design System
+   目标：参考优秀技术博客 / 产品文档站的排版思路，强化首屏、卡片、主题、文章阅读和移动端体验。
+   说明：当前 App.jsx 内部仍保留内联样式，因此这里使用更高优先级和必要的 !important 做覆盖，避免大范围重构。 */
+
+:root {
+  --radius-xl: 30px;
+  --radius-lg: 24px;
+  --radius-md: 18px;
+  --content-max: 1180px;
+  --article-max: 820px;
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
+}
+
+html {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: var(--bg) !important;
+}
+
+.blog-app {
+  position: relative;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 32rem),
+    radial-gradient(circle at 88% 14%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 26rem),
+    linear-gradient(180deg, color-mix(in srgb, var(--bg) 94%, white), var(--bg) 34rem) !important;
+}
+
+.blog-app::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: .38;
+  z-index: 0;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--line) 70%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--line) 70%, transparent) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, black, transparent 62%);
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  width: min(var(--content-max), calc(100% - 32px)) !important;
+}
+
+.nav {
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  background: color-mix(in srgb, var(--panel) 78%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--line) 78%, transparent) !important;
+  border-radius: 26px !important;
+  box-shadow: 0 18px 55px rgba(15, 23, 42, .08) !important;
+}
+
+.logo {
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255,255,255,.45), transparent 36%),
+    linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 62%, #7c3aed)) !important;
+  color: #fff !important;
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.brand-title {
+  letter-spacing: -.04em !important;
+}
+
+.nav-link,
+.theme-btn,
+.pill-btn,
+.tag-btn,
+.secondary-btn,
+.text-btn {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.nav-link.active,
+.theme-btn.active,
+.pill-btn.active {
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 18%, transparent) !important;
+}
+
+.hero-grid {
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, .85fr) !important;
+  gap: 24px !important;
+  padding-top: 34px !important;
+}
+
+.hero-card,
+.series-hero,
+.about-hero,
+.article,
+.preview-card,
+.side-card,
+.workbench,
+.toc-card,
+.post-card,
+.mini-card,
+.about-card {
+  border-color: color-mix(in srgb, var(--line) 82%, transparent) !important;
+}
+
+.hero-card,
+.series-hero,
+.about-hero {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--panel) 94%, white), var(--panel)) !important;
+}
+
+.hero-card::after,
+.series-hero::after,
+.about-hero::after {
+  content: "";
+  position: absolute;
+  right: -90px;
+  top: -90px;
+  width: 260px;
+  height: 260px;
+  border-radius: 999px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 24%, transparent), transparent 68%);
+  pointer-events: none;
+}
+
+.badge {
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.3);
+}
+
+h1 {
+  letter-spacing: -.07em !important;
+  text-wrap: balance;
+}
+
+.hero-desc,
+.article-summary {
+  color: color-mix(in srgb, var(--muted) 88%, var(--text)) !important;
+  text-wrap: pretty;
+}
+
+.primary-btn {
+  background:
+    linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 68%, #7c3aed)) !important;
+  box-shadow: 0 16px 34px color-mix(in srgb, var(--accent) 24%, transparent) !important;
+}
+
+.primary-btn:hover,
+.secondary-btn:hover,
+.post-card:hover,
+.mini-card:hover {
+  transform: translateY(-2px) !important;
+}
+
+.card,
+.post-card,
+.mini-card {
+  transition: transform .22s var(--ease-out), border-color .22s var(--ease-out), box-shadow .22s var(--ease-out), background .22s var(--ease-out) !important;
+}
+
+.card:hover,
+.post-card:hover,
+.mini-card:hover {
+  box-shadow: 0 26px 70px rgba(15, 23, 42, .11) !important;
+}
+
+.series-grid,
+.path-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.mini-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 118px;
+}
+
+.mini-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 8%, transparent), transparent 52%);
+  opacity: 0;
+  transition: opacity .22s var(--ease-out);
+  pointer-events: none;
+}
+
+.mini-card:hover::before {
+  opacity: 1;
+}
+
+.post-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 96%, white), var(--panel)) !important;
+}
+
+.post-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 18px;
+  bottom: 18px;
+  width: 4px;
+  border-radius: 999px;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity .22s var(--ease-out);
+}
+
+.post-card:hover::before,
+.post-card.active::before {
+  opacity: 1;
+}
+
+.post-card h2,
+.preview-card h2,
+.section-title h2 {
+  text-wrap: balance;
+}
+
+.article-layout {
+  grid-template-columns: minmax(0, var(--article-max)) 300px !important;
+  justify-content: center !important;
+  align-items: start !important;
+}
+
+.article {
+  padding: clamp(26px, 4vw, 48px) !important;
+  border-radius: 34px !important;
+  background: color-mix(in srgb, var(--panel) 98%, white) !important;
+}
+
+.article h1 {
+  max-width: 100% !important;
+  font-size: clamp(34px, 4.8vw, 56px) !important;
+  line-height: 1.08 !important;
+}
+
+.value-grid .mini-card {
+  min-height: auto !important;
+  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, var(--soft)), var(--soft)) !important;
+}
+
+.article-markdown {
+  max-width: 100% !important;
+  font-size: 17px !important;
+  line-height: 2.02 !important;
+  color: color-mix(in srgb, var(--text) 94%, var(--muted)) !important;
+}
+
+.article-markdown > *:first-child {
+  margin-top: 0 !important;
+}
+
+.article-markdown h2 {
+  position: relative;
+  margin-top: 3.2rem !important;
+  padding-top: 1.8rem !important;
+  font-size: clamp(25px, 3vw, 32px) !important;
+  border-top: 1px solid color-mix(in srgb, var(--line) 88%, transparent) !important;
+}
+
+.article-markdown h2::before {
+  content: "";
+  display: block;
+  width: 48px;
+  height: 4px;
+  margin-bottom: 14px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 20%, transparent));
+}
+
+.article-markdown h3 {
+  margin-top: 2.2rem !important;
+  color: var(--text) !important;
+}
+
+.article-markdown p {
+  margin: 1rem 0 !important;
+  text-wrap: pretty;
+}
+
+.article-markdown ul,
+.article-markdown ol {
+  background: color-mix(in srgb, var(--soft) 72%, transparent);
+  padding: 14px 18px 14px 2.2rem !important;
+  border: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
+  border-radius: 18px;
+}
+
+.article-markdown li + li {
+  margin-top: .55rem !important;
+}
+
+.article-markdown blockquote {
+  border-left-width: 5px !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.24);
+}
+
+.article-markdown table {
+  background: var(--panel) !important;
+}
+
+.article-markdown img {
+  display: block;
+  max-width: 100%;
+  margin: 26px auto;
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+.code-wrap {
+  border: 1px solid rgba(148, 163, 184, .2) !important;
+  box-shadow: 0 22px 55px rgba(2, 6, 23, .22) !important;
+}
+
+.toc-card {
+  border-radius: 26px !important;
+  background: color-mix(in srgb, var(--panel) 88%, transparent) !important;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.toc-card a {
+  border-bottom-style: dashed !important;
+  line-height: 1.5 !important;
+}
+
+.footer {
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  background: color-mix(in srgb, var(--panel) 78%, transparent) !important;
+}
+
+@media (max-width: 980px) {
+  .hero-grid,
+  .content-grid,
+  .main-grid,
+  .article-layout,
+  .series-grid,
+  .path-grid,
+  .related-grid,
+  .about-grid,
+  .value-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .nav {
+    top: 8px !important;
+  }
+
+  .theme-list {
+    width: 100%;
+  }
+}
+
+@media (max-width: 560px) {
+  .container {
+    width: min(100% - 20px, var(--content-max)) !important;
+  }
+
+  .nav {
+    border-radius: 22px !important;
+    padding: 12px !important;
+  }
+
+  .brand-title {
+    font-size: 16px !important;
+  }
+
+  .brand-subtitle {
+    display: none;
+  }
+
+  .nav-link,
+  .theme-btn {
+    padding: 8px 10px !important;
+    font-size: 12px !important;
+  }
+
+  .hero-card,
+  .series-hero,
+  .about-hero,
+  .article {
+    border-radius: 26px !important;
+  }
+
+  .article-markdown {
+    font-size: 16px !important;
+    line-height: 1.9 !important;
+  }
+
+  .article-markdown ul,
+  .article-markdown ol {
+    padding-left: 1.8rem !important;
+  }
+}
