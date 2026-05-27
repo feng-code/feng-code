@@ -29,42 +29,19 @@ function slugFromPath(filePath) {
     .trim();
 }
 
-function parseBodyBlocks(body) {
-  const normalizedBody = normalizeMarkdown(body);
-  if (!normalizedBody) {
-    return [{ heading: "正文", body: "这篇文章还没有正文内容。", code: "", codeLang: "text" }];
-  }
-
-  const sections = normalizedBody.split(/\n(?=(?:##\s+|\d+\.\s+))/g);
-  const blocks = sections
-    .map((section, index) => {
-      const lines = section.trim().split("\n");
-      let heading = lines[0]?.replace(/^##\s+/, "").replace(/^\d+\.\s+/, "").trim();
-      let rest = lines.slice(1).join("\n").trim();
-
-      if (!heading) return null;
-      if (index === 0 && !/^##\s+/.test(lines[0]) && !/^\d+\.\s+/.test(lines[0])) {
-        rest = section.trim();
-        heading = "背景";
-      }
-
-      const codeMatch = rest.match(/```(\w+)?\n([\s\S]*?)```/);
-      return {
-        heading,
-        body: codeMatch ? rest.replace(codeMatch[0], "").trim() : rest,
-        code: codeMatch?.[2]?.trim() || "",
-        codeLang: codeMatch?.[1] || "text",
-      };
-    })
-    .filter(Boolean);
-
-  return blocks.length > 0 ? blocks : [{ heading: "正文", body: normalizedBody, code: "", codeLang: "text" }];
+function getFirstMeaningfulLine(markdown) {
+  return normalizeMarkdown(markdown)
+    .split("\n")
+    .map((line) => line.trim())
+    .find((line) => line && line !== "---");
 }
 
 function fallbackMeta(markdown, filePath) {
-  const lines = normalizeMarkdown(markdown).split("\n").map((line) => line.trim());
-  const title = lines.find((line) => line && line !== "---") || slugFromPath(filePath);
-  const summary = lines.find((line) => line && line !== title && line !== "---") || "这是一篇技术复盘文章。";
+  const title = getFirstMeaningfulLine(markdown) || slugFromPath(filePath);
+  const summary = normalizeMarkdown(markdown)
+    .split("\n")
+    .map((line) => line.trim())
+    .find((line) => line && line !== title && line !== "---") || "这是一篇技术复盘文章。";
 
   return {
     slug: slugFromPath(filePath),
@@ -83,12 +60,60 @@ function fallbackMeta(markdown, filePath) {
   };
 }
 
+function looksLikeSectionTitle(line, prevLine, nextLine) {
+  const text = line.trim();
+  if (!text || text.length > 90) return false;
+  if (!/^\d+(?:\.\d+)*\. ?\S+/.test(text) && !/^\d+(?:\.\d+)*\s+\S+/.test(text)) return false;
+  const prevBlank = !String(prevLine ?? "").trim();
+  const nextBlank = !String(nextLine ?? "").trim();
+  return prevBlank || nextBlank;
+}
+
+function normalizeBodyForMarkdown(body, title) {
+  const normalized = normalizeMarkdown(body);
+  const lines = normalized.split("\n");
+  let titleSkipped = false;
+
+  return lines
+    .map((line, index) => {
+      const trimmed = line.trim();
+
+      // 普通长文经常第一行就是标题。文章页已经有 h1，这里去掉重复标题。
+      if (!titleSkipped && trimmed && trimmed === title) {
+        titleSkipped = true;
+        return "";
+      }
+
+      const prev = lines[index - 1];
+      const next = lines[index + 1];
+      if (looksLikeSectionTitle(line, prev, next)) {
+        const level = /^\d+\.\d+/.test(trimmed) ? "###" : "##";
+        return `${level} ${trimmed}`;
+      }
+
+      return line;
+    })
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function extractHeadings(markdown) {
+  return normalizeMarkdown(markdown)
+    .split("\n")
+    .map((line) => line.match(/^(#{2,4})\s+(.+)$/))
+    .filter(Boolean)
+    .map((match) => ({ level: match[1].length, text: match[2].trim() }));
+}
+
 export function parseMarkdownPost(markdown, filePath = "unknown.md") {
   const normalized = normalizeMarkdown(markdown);
   const match = normalized.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
 
   if (!match) {
-    return { ...fallbackMeta(normalized, filePath), content: parseBodyBlocks(normalized) };
+    const meta = fallbackMeta(normalized, filePath);
+    const rawMarkdown = normalizeBodyForMarkdown(normalized, meta.title);
+    return { ...meta, rawMarkdown, headings: extractHeadings(rawMarkdown) };
   }
 
   const meta = {};
@@ -101,7 +126,8 @@ export function parseMarkdownPost(markdown, filePath = "unknown.md") {
 
   const fallback = fallbackMeta(normalized, filePath);
   const finalMeta = { ...fallback, ...meta };
-  return { ...finalMeta, content: parseBodyBlocks(match[2]) };
+  const rawMarkdown = normalizeBodyForMarkdown(match[2], finalMeta.title);
+  return { ...finalMeta, rawMarkdown, headings: extractHeadings(rawMarkdown) };
 }
 
 // Vite 会在构建时自动扫描 posts 目录下所有 Markdown 文件。
@@ -111,8 +137,6 @@ const markdownModules = import.meta.glob("./posts/*.md", {
   query: "?raw",
   import: "default",
 });
-
-export const postSources = Object.values(markdownModules);
 
 export const posts = Object.entries(markdownModules)
   .map(([filePath, markdown]) => parseMarkdownPost(markdown, filePath))
