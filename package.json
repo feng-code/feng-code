@@ -1,7 +1,7 @@
 {
   "name": "qingshan-blog",
   "private": true,
-  "version": "1.5.1",
+  "version": "1.5.3",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,8 +10,8 @@
     "new:source": "node scripts/new-post.js --type=source",
     "new:arch": "node scripts/new-post.js --type=arch",
     "new:tutorial": "node scripts/new-post.js --type=tutorial",
-    "generate:feeds": "node scripts/generate-feeds-safe.js",
-    "prebuild": "node scripts/generate-feeds-safe.js",
+    "generate:feeds": "node scripts/generate-feeds.js",
+    "prebuild": "node scripts/generate-feeds.js",
     "build": "vite build",
     "preview": "vite preview"
   },
