@@ -1,10 +1,11 @@
 {
   "name": "qingshan-blog",
   "private": true,
-  "version": "1.3.0",
+  "version": "1.4.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "new:post": "node scripts/new-post.js",
     "generate:feeds": "node scripts/generate-feeds.js",
     "prebuild": "node scripts/generate-feeds.js",
     "build": "vite build",
