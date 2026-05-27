@@ -1,8 +1,3 @@
-import rtosTaskDesign from "./posts/rtos-task-design.md?raw";
-import tboxLowPowerChain from "./posts/tbox-low-power-chain.md?raw";
-import uartDmaIdleParser from "./posts/uart-dma-idle-parser.md?raw";
-import sourceReadingMethod from "./posts/source-reading-method.md?raw";
-
 function parseFrontMatterValue(value) {
   const v = value.trim();
   if (/^\d+$/.test(v)) return Number(v);
@@ -52,12 +47,15 @@ export function parseMarkdownPost(markdown) {
   return { ...meta, content };
 }
 
-export const postSources = [
-  rtosTaskDesign,
-  tboxLowPowerChain,
-  uartDmaIdleParser,
-  sourceReadingMethod,
-];
+// Vite 会在构建时自动扫描 posts 目录下所有 Markdown 文件。
+// 后续新增文章时，只需要新增 src/content/posts/*.md，不需要再手动修改本文件。
+const markdownModules = import.meta.glob("./posts/*.md", {
+  eager: true,
+  query: "?raw",
+  import: "default",
+});
+
+export const postSources = Object.values(markdownModules);
 
 export const posts = postSources
   .map(parseMarkdownPost)
