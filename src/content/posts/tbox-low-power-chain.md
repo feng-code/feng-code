@@ -8,6 +8,9 @@ series: tbox
 quality: 复盘
 tags: [TBOX, 低功耗, WAKEUP_OUT]
 minutes: 9
+featured: true
+audience: [正在调试 TBOX 低功耗的人, 容易混淆唤醒信号和系统唤醒的人]
+takeaways: [低功耗分层排查框架, ACK/上报/云端确认边界]
 summary: 把系统休眠、外设唤醒、总线使能、协议执行、云端上报拆成独立链路，避免误判。
 ---
 
