@@ -1,34 +1,179 @@
-.extra-theme-btn {
+.theme-list {
   position: relative;
-  gap: 7px !important;
+  max-width: none !important;
+  justify-content: flex-end !important;
+  flex-wrap: nowrap !important;
 }
 
 .theme-dot {
   width: 11px;
   height: 11px;
   display: inline-block;
+  flex: 0 0 auto;
   border-radius: 999px;
   background:
-    radial-gradient(circle at 30% 25%, rgba(255,255,255,.75), transparent 34%),
+    radial-gradient(circle at 30% 25%, rgba(255,255,255,.82), transparent 36%),
     var(--dot);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--dot) 16%, transparent);
 }
 
-.extra-theme-btn.active {
-  border-color: var(--accent) !important;
-  background: var(--accent-soft) !important;
-  color: var(--accent) !important;
-  font-weight: 800 !important;
+.theme-picker {
+  position: relative;
+  z-index: 40;
 }
 
-.theme-list {
-  max-width: 520px;
-  justify-content: flex-end;
+.theme-picker-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 9px 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform .18s ease, border-color .18s ease, background .18s ease, color .18s ease;
+}
+
+.theme-picker-trigger:hover,
+.theme-picker.open .theme-picker-trigger {
+  transform: translateY(-1px);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.theme-current-name {
+  font-weight: 900;
+  color: var(--accent);
+}
+
+.theme-picker-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 12px);
+  width: min(360px, calc(100vw - 28px));
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--panel) 94%, transparent);
+  box-shadow: 0 26px 70px rgba(15, 23, 42, .18);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px) scale(.98);
+  transform-origin: top right;
+  transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
+}
+
+.theme-picker.open .theme-picker-panel {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+.theme-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 4px 12px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 10px;
+}
+
+.theme-panel-head strong {
+  color: var(--text);
+  font-size: 15px;
+}
+
+.theme-panel-head span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.theme-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 58px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--soft);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: transform .16s ease, border-color .16s ease, background .16s ease;
+}
+
+.theme-option:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent);
+}
+
+.theme-option.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.theme-option-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.theme-option-text strong {
+  font-size: 13px;
+  line-height: 1.2;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.theme-option.active .theme-option-text strong {
+  color: var(--accent);
+}
+
+.theme-option-text small {
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
 }
 
 @media (max-width: 980px) {
   .theme-list {
-    max-width: 100%;
     justify-content: flex-start !important;
+    width: auto !important;
+  }
+
+  .theme-picker-panel {
+    left: 0;
+    right: auto;
+    transform-origin: top left;
+  }
+}
+
+@media (max-width: 560px) {
+  .theme-options {
+    grid-template-columns: 1fr;
+  }
+
+  .theme-picker-trigger {
+    min-height: 40px;
+    padding: 8px 11px;
+  }
+
+  .theme-current-name {
+    display: none;
   }
 }
