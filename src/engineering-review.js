@@ -1,3 +1,12 @@
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function getArticleText() {
   return document.querySelector(".article")?.textContent || "";
 }
@@ -40,16 +49,16 @@ function buildReviewCard() {
   card.innerHTML = `
     <div class="engineering-review-head">
       <strong>工程复盘卡片</strong>
-      <span>${classifyProblem(`${title} ${text}`)}</span>
+      <span>${escapeHtml(classifyProblem(`${title} ${text}`))}</span>
     </div>
     <div class="engineering-review-grid">
       <div class="engineering-review-item">
         <b>问题层级</b>
-        <p>${inferLayer(`${title} ${text}`)}</p>
+        <p>${escapeHtml(inferLayer(`${title} ${text}`))}</p>
       </div>
       <div class="engineering-review-item">
         <b>分析入口</b>
-        <p>${summary}</p>
+        <p>${escapeHtml(summary)}</p>
       </div>
       <div class="engineering-review-item">
         <b>推荐验证</b>
