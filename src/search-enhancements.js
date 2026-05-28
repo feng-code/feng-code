@@ -1,6 +1,20 @@
 let searchIndex = null;
 let searchLoading = null;
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function safeHashUrl(value) {
+  const url = String(value ?? "");
+  return /^#\/posts\/[a-zA-Z0-9_-]+$/.test(url) ? url : "#/";
+}
+
 async function loadSearchIndex() {
   if (searchIndex) return searchIndex;
   if (searchLoading) return searchLoading;
@@ -77,20 +91,27 @@ function renderResults(posts, keyword) {
 
   hint.textContent = matched.length ? `找到 ${matched.length} 条相关结果` : "没有找到相关结果，换个关键词试试。";
   results.innerHTML = matched
-    .map(({ post }) => `
-      <a class="search-result" href="${post.url}">
-        <div class="search-result-title">
-          <span>${post.title}</span>
-          <span>${post.quality || "文章"}</span>
-        </div>
-        <p>${getSnippet(post.summary || post.text, q)}</p>
-        <div class="search-meta">
-          <span>${post.category || "未分类"}</span>
-          <span>${post.series || "series"}</span>
-          ${(post.tags || []).slice(0, 4).map((tag) => `<span>#${tag}</span>`).join("")}
-        </div>
-      </a>
-    `)
+    .map(({ post }) => {
+      const tags = (post.tags || [])
+        .slice(0, 4)
+        .map((tag) => `<span>#${escapeHtml(tag)}</span>`)
+        .join("");
+
+      return `
+        <a class="search-result" href="${safeHashUrl(post.url)}">
+          <div class="search-result-title">
+            <span>${escapeHtml(post.title)}</span>
+            <span>${escapeHtml(post.quality || "文章")}</span>
+          </div>
+          <p>${escapeHtml(getSnippet(post.summary || post.text, q))}</p>
+          <div class="search-meta">
+            <span>${escapeHtml(post.category || "未分类")}</span>
+            <span>${escapeHtml(post.series || "series")}</span>
+            ${tags}
+          </div>
+        </a>
+      `;
+    })
     .join("");
 }
 
@@ -102,7 +123,6 @@ function closeSearch() {
 async function openSearch() {
   ensureSearchOverlay();
 
-  // 搜索是最高优先级弹层，打开前先关闭主题面板，避免两个浮层叠在一起。
   document.querySelector(".theme-picker")?.classList.remove("open");
   document.querySelector(".theme-picker-trigger")?.setAttribute("aria-expanded", "false");
 
@@ -124,7 +144,7 @@ function ensureSearchTrigger() {
   const button = document.createElement("button");
   button.type = "button";
   button.className = "site-search-trigger";
-  button.innerHTML = `<span>⌘</span><strong>搜索</strong>`;
+  button.textContent = "⌘ 搜索";
   button.addEventListener("click", openSearch);
   navLinks.appendChild(button);
 }
