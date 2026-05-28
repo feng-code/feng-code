@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>写作工作台 | 青山技术札记</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif; background: #f8fafc; color: #0f172a; }
+      .wrap { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 32px 0; }
+      .hero, .card { background: white; border: 1px solid #e2e8f0; border-radius: 28px; box-shadow: 0 22px 55px rgba(15, 23, 42, 0.08); }
+      .hero { padding: 32px; margin-bottom: 20px; }
+      h1 { margin: 0; font-size: clamp(32px, 5vw, 56px); letter-spacing: -0.05em; line-height: 1.05; }
+      p { color: #64748b; line-height: 1.8; }
+      .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+      .card { padding: 22px; }
+      .card h2 { margin-top: 0; }
+      textarea { width: 100%; min-height: 360px; resize: vertical; padding: 16px; border-radius: 18px; border: 1px solid #e2e8f0; background: #f8fafc; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; line-height: 1.6; }
+      button, a { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; padding: 10px 16px; border-radius: 999px; border: 0; background: #2563eb; color: white; font-weight: 800; text-decoration: none; cursor: pointer; }
+      .ghost { background: #f1f5f9; color: #0f172a; border: 1px solid #e2e8f0; }
+      .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+      .tips { margin-top: 18px; padding: 16px; border-radius: 18px; background: #f1f5f9; }
+      @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <section class="hero">
+        <h1>青山技术札记 · 写作工作台</h1>
+        <p>选择一种模板，复制 Markdown 内容，在 GitHub 的 <code>src/content/posts/</code> 目录中新建 <code>.md</code> 文件并提交，即可自动更新博客。</p>
+        <div class="actions">
+          <a href="./">返回博客首页</a>
+          <a class="ghost" href="https://github.com/feng-code/feng-code/tree/main/src/content/posts">打开文章目录</a>
+        </div>
+      </section>
+
+      <section class="grid" id="templates"></section>
+
+      <section class="tips">
+        <strong>推荐流程：</strong>
+        <p>1. 复制模板 → 2. 到 GitHub 新建 <code>src/content/posts/your-slug.md</code> → 3. 粘贴并修改内容 → 4. Commit changes → 5. 等 Actions 自动部署。</p>
+      </section>
+    </main>
+
+    <script>
+      const today = new Date().toISOString().slice(0, 10);
+      const templates = [
+        {
+          title: "调试复盘模板",
+          slug: "debug-review",
+          content: `---\nslug: debug-review\ntitle: 调试复盘：这里填写问题标题\ndate: ${today}\nupdated: ${today}\ncategory: 嵌入式实战\nseries: tbox\nquality: 复盘\ntags: [调试, 复盘, 最小闭环]\nminutes: 8\nfeatured: false\naudience: [正在定位类似问题的人, 想学习工程化排查方法的人]\ntakeaways: [现象到根因的分析链路, 最小修改和验证闭环]\nsummary: 一句话说明这篇文章解决什么问题。\n---\n\n## 结论\n先给出核心判断。\n\n## 背景\n说明项目场景、问题现象、版本、复现条件。\n\n## 已知事实\n只写已经被源码、日志、报文或实验确认的信息。\n\n## 最高优先级假设\n列出 1~3 个最可能原因，并说明为什么优先验证它们。\n\n## 插桩点\n说明要加哪些日志，观察哪些变量、状态、报文、时序。\n\n## 根因\n说明最终确认的根因，以及证据是什么。\n\n## 最小修改方案\n说明改哪里、为什么、影响范围。\n\n## 验证方法\n列出日志、测试用例、通过标准。\n\n## 风险与复盘\n沉淀经验，避免下次重复踩坑。\n`
+        },
+        {
+          title: "源码阅读模板",
+          slug: "source-reading",
+          content: `---\nslug: source-reading\ntitle: 源码阅读：这里填写模块名称\ndate: ${today}\nupdated: ${today}\ncategory: 源码阅读\nseries: growth\nquality: 源码\ntags: [源码阅读, 调用链, 工程能力]\nminutes: 10\nfeatured: false\naudience: [想提升源码阅读效率的人, 容易被接口名误导的人]\ntakeaways: [结构体优先阅读法, 谁赋值谁读取追踪法]\nsummary: 一句话说明这篇源码阅读解决什么问题。\n---\n\n## 结论\n先说明这个模块解决什么问题，以及阅读源码时最核心的抓手是什么。\n\n## 关键结构体 / 宏 / 函数\n贴出最关键的定义，保留原始名称。\n\n## 字段和参数解释\n逐项解释字段、参数、返回值的真实作用。\n\n## 初始化链路\n说明谁初始化、谁赋值、在哪个阶段生效。\n\n## 调用链\n按调用顺序说明谁调用谁、关键分支在哪里。\n\n## 谁读取 / 谁修改\n追踪关键字段的读写点，避免只看名称猜语义。\n\n## 工程意义\n说明这种设计的好处、代价和适用场景。\n\n## 调试方法\n说明如何用日志、断点、搜索、实验验证理解是否正确。\n`
+        },
+        {
+          title: "架构设计模板",
+          slug: "architecture-design",
+          content: `---\nslug: architecture-design\ntitle: 架构设计：这里填写主题\ndate: ${today}\nupdated: ${today}\ncategory: 系统架构\nseries: rtos\nquality: 架构\ntags: [架构设计, RTOS, 模块边界]\nminutes: 12\nfeatured: false\naudience: [正在做模块拆分的人, 想提升系统设计能力的人]\ntakeaways: [边界划分方法, 方案取舍和风险控制]\nsummary: 一句话说明这个架构设计解决什么问题。\n---\n\n## 结论\n先给推荐方案，并说明为什么它是当前约束下的更优解。\n\n## 目标\n说明这个架构要解决的问题和成功标准。\n\n## 边界和约束\n说明硬件、RTOS、协议、功耗、存储、时序、维护成本等约束。\n\n## 输入源和输出链路\n列出输入事件、数据流、控制流和输出动作。\n\n## 模块划分\n说明每个模块的职责、边界、依赖和禁止事项。\n\n## 状态机 / 队列 / 事件设计\n说明哪些用状态机，哪些用队列，哪些用事件通知。\n\n## 关键风险\n分析并发、阻塞、队列满、事件丢失、重入、异常恢复等风险。\n\n## 推荐方案\n给出最小可落地方案，避免过度设计。\n\n## 验证和演进\n说明如何验证，以及后续如何逐步演进。\n`
+        },
+        {
+          title: "学习教程模板",
+          slug: "tutorial-note",
+          content: `---\nslug: tutorial-note\ntitle: 教程：这里填写学习主题\ndate: ${today}\nupdated: ${today}\ncategory: 学习教程\nseries: growth\nquality: 教程\ntags: [教程, 学习路线, 工程实践]\nminutes: 10\nfeatured: false\naudience: [正在入门这个主题的人, 想系统学习的人]\ntakeaways: [知识框架, 示例和常见坑]\nsummary: 一句话说明这篇教程能帮助读者学会什么。\n---\n\n## 结论\n先说明这个主题的核心价值，以及学习它要抓住哪条主线。\n\n## 问题背景\n说明为什么需要学习这个知识点，它解决什么工程问题。\n\n## 层级框架\n从硬件、驱动、RTOS、协议、应用等层级建立整体图景。\n\n## 核心机制\n解释最关键的机制和运行原理。\n\n## 链路 / 时序\n用步骤描述完整链路，说明关键状态变化。\n\n## 关键结构 / 接口 / 函数\n列出实际工程中最常见的结构和接口。\n\n## 示例\n给出一个最小可运行或最小可理解示例。\n\n## 常见坑\n列出容易误解或踩坑的地方。\n\n## 调试方法\n说明如何验证、如何定位、如何复盘。\n`
+        }
+      ];
+
+      const root = document.querySelector('#templates');
+      templates.forEach((tpl) => {
+        const card = document.createElement('article');
+        card.className = 'card';
+        card.innerHTML = `<h2>${tpl.title}</h2><p>建议文件名：<code>${tpl.slug}.md</code></p><textarea readonly>${tpl.content}</textarea><div class="actions"><button>复制模板</button><a class="ghost" href="https://github.com/feng-code/feng-code/new/main/src/content/posts?filename=${tpl.slug}.md">去 GitHub 新建文章</a></div>`;
+        card.querySelector('button').addEventListener('click', async () => {
+          await navigator.clipboard.writeText(tpl.content);
+          card.querySelector('button').textContent = '已复制';
+          setTimeout(() => (card.querySelector('button').textContent = '复制模板'), 1200);
+        });
+        root.appendChild(card);
+      });
+    </script>
+  </body>
+</html>

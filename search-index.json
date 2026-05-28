@@ -1,0 +1,90 @@
+{
+  "generatedAt": "2026-05-28T01:37:19.305Z",
+  "posts": [
+    {
+      "slug": "architecture-design",
+      "title": "最新 RTOS 多任务框架设计：从任务、队列、事件到状态机的工程化落地",
+      "date": "2026-05-27",
+      "updated": "2026-05-27",
+      "category": "系统架构",
+      "series": "rtos",
+      "quality": "架构",
+      "tags": [
+        "RTOS",
+        "架构",
+        "多任务"
+      ],
+      "summary": "这是一篇技术文章。",
+      "url": "#/posts/architecture-design",
+      "text": "最新 RTOS 多任务框架设计：从任务、队列、事件到状态机的工程化落地 适用场景：TBOX、IoT 网关、公网对讲机、工业控制器、车载终端、MCU 通信模组、MCU MPU 协同系统。 核心目标：设计一个可维护、可调试、可扩展、可低功耗、可异常恢复的 RTOS 多任务框架。 1. 结论 一个优秀的 RTOS 多任务框架，不是简单地“功能来一个，任务开一个”，而应该围绕以下几个核心原则设计： 任务负责并发边界，队列负责跨任务传递数据，事件负责状态通知，状态机负责复杂业务流转，资源 owner 负责共享资源一致性。 推荐的整体架构是： 一个事件入口 一个命令执行器 一个状态 owner 一个上报出口 一个低功耗仲裁器 一个日志出口 一个系统监控中心 最终形成： 输入源 → 服务任务 → 事件/命令队列 → 业务状态机 → 统一上报/低功耗/日志/监控 2. 为什么 RTOS 项目需要框架化设计？ 很多 RTOS 项目一开始看起来很简单： 串口收数据 云端收命令 蓝牙收命令 解析协议 控制外设 上报云端 写日志 进入低功耗 初期常见写法是： 一个功能一个任务 一个模块一个全局变量 一个回调里直接处理业务 一个状态用多个 flag 拼起来 短期能跑，但项目一复杂，就会出现： 1. 任务越来越多，不知道谁负责什么 2. 全局变量到处修改，状态来源失控 3. 队列满了不知道丢了什么 4. 命令收到后到底有没有执行成功说不清 5. ACK 成功、上报成功、云端确认混在一起 6. 低功耗判断混乱，系统唤醒和外设唤醒分不清 7. 日志只有 success/fail，无法定位失败层级 8. 后续新增功能只能继续打补丁 所以，多任务框架的本质不是“把任务分多”，而是建立一套长期可维护的系统规则。 3. 总体设计目标 目标 说明 可维护 模块边界清晰，新增业务不破坏已有逻辑 可调试 每条命令、事件、状态都能追踪 可扩展 新增 BLE、RS485、云端、FTP、OTA 不需要重构主框架 可恢复 网络断开、ACK 超时、文件失败、队列满都有处理路径 可低功耗 所有 sleep / wakeup 走统一仲裁 可测试 每个任务、队列、状态机都有验证点 可裁剪 小项目保留核心任务，大项目按需扩展 4. 总体架构 4.1 分层架构 ┌────────────────────────────────────────────────────────────┐ │ Application Layer │ │ │ │ cmd app vehicle app report app lpm app │ │ ota app ftp app factory app diag app │ └──────────────────────────────▲─────────────────────────────┘ │ ┌──────────────────────────────┴─────────────────────────────┐ │ Service Layer │ │ │ │ rs485 svc cloud svc ble svc storage svc │ │ log svc net svc time svc gnss svc │ └──────────────────────────────▲─────────────────────────────┘ │ ┌──────────────────────────────┴─────────────────────────────┐ │ Framework Layer │ │ │ │ event bus cmd engine msg queue buffer pool │ │ timer mgr trace mgr monitor error model │ └──────────────────────────────▲─────────────────────────────┘ │ ┌──────────────────────────────┴─────────────────────────────┐ │ Driver Layer │ │ │ │ uart gpio rs485 spi nand rtc wdg │ └──────────────────────────────▲─────────────────────────────┘ │ ┌──────────────────────────────┴─────────────────────────────┐ │ RTOS / BSP │ │ │ │ ThreadX / FreeRTOS / RT Thread / Vendor OS │ └────────────────────────────────────────────────────────────┘ 5. 核心设计原则 5.1 任务不是功能，任务是并发边界 错误理解： 一个功能 = 一个任务 一个命令 = 一个任务 一个状态 = 一个任务 正确理解： 任务用于隔离阻塞、实时性、资源所有权和复杂状态机。 适合独立任务的场景： 条件 示例 会长期阻塞 网络连接、FTP 上传、OTA 下载 有独立实时性 RS485 接收、CAN 接收 有独占资源 UART TX、日志文件、MQTT client 有复杂状态机 OTA、LPM、命令执行 失败恢复复杂 云端重连、文件上传、升级流程 5.2 队列不是全局垃圾桶 队列适合： 传命令 传事件 传数据包 传异步请求 传执行结果 队列不适合： 保存长期状态 传局部变量地址 无 owner 的指针 大量无意义重复事件 5.3 事件不等于执行成功 必须区分： 收到命令 ≠ 执行成功 解析成功 ≠ 本地执行成功 本地写值成功 ≠ 外设执行成功 RS485 发送成功 ≠ 仪表 ACK 成功 ACK 成功 ≠ 事件/属性上报成功 上报成功 ≠ 云端最终确认成功 5.4 每个关键资源必须有唯一 owner 资源/状态 owner 访问方式 vehicle state vehicle app / vehicle task getter / event / request RS485 TX rs485 tx task rs485 tx queue MQTT client cloud task cloud API / queue BLE 状态 ble task ble API / event 日志文件 log task log queue 配置文件 cfg svc cfg API OTA 文件 ota task ota API FTP client ftp task ftp queue LPM 状态 lpm task lpm request API 禁止多个任务随意修改同一个全局状态。 6. 推荐任务模型 6.1 第一阶段：最小可落地任务 第一版不要任务过多，建议保留这些核心任务： 任务 职责 boot task 系统初始化、创建任务 app router task 系统事件路由，只转发不做重业务 rs485 task RS485 接收、解析、发送 cloud task 云端连接、云端命令入口 cmd exec task 命令事务执行 report task 统一事件/属性上报 lpm task 低功耗统一仲裁 log task 异步日志写入 monitor task 任务健康、队列水位、栈水位监控 6.2 第二阶段：按复杂度拆分 当业务复杂后，再拆成： 任务 何时拆 rs485 rx task / rs485 tx task RS485 收发压力大、发送阻塞明显 vehicle task 车辆状态来源复杂，需要统一聚合 ota task OTA 流程复杂，需要独立状态机 ftp task FTP 上传耗时，不能影响核心业务 factory task 出厂/EOL 流程复杂 diag task 诊断协议复杂 shell task 调试 shell / RS485 shell 复杂 7. 推荐任务拓扑 ┌──────────────┐ │ boot task │ └──────┬───────┘ │ ▼ ┌──────────────┐ │ init system │ └──────┬───────┘ │ ┌───────────────────────┼───────────────────────┐ │ │ │ ▼ ▼ ▼ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ │ rs485 task │ │ cloud task │ │ ble task │ └──────┬───────┘ └──────┬───────┘ └──────┬───────┘ │ │ │ └──────────────┬────────┴──────────────┬────────┘ ▼ ▼ ┌──────────────┐ ┌──────────────┐ │ event queue │ │ cmd queue │ └──────┬───────┘ └──────┬───────┘ │ │ ▼ ▼ ┌──────────────┐ ┌──────────────┐ │app router task│ │cmd exec task │ └──────┬───────┘ └──────┬───────┘ │ │ ┌────────────┼────────────┐ │ ▼ ▼ ▼ ▼ ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐ │report task │ │ lpm task │ │ log task │ │ rs485 send │ └────────────┘ └────────────┘ └────────────┘ └────────────┘ 后台： ┌──────────────┐ │ monitor task │ └──────────────┘ 8. 消息模型设计 8.1 三类消息通道 event queue ：系统事件，表示“发生了什么” cmd queue ：业务命令，表示“要执行什么” data queue ：数据通道，表示“传递什么数据” 8.2 推荐队列 队列 作用 event queue 系统事件入口 cmd queue 命令事务执行 report queue 上报请求 rs485 tx queue RS485 发送 log queue 日志写入 lpm queue 低功耗请求 ota queue OTA 请求 ftp queue FTP 上传请求 8.3 队列容量建议 队列 建议深度 满队列策略 event queue 32 64 关键事件保留，非关键事件可丢 cmd queue 8 16 忙则拒绝新命令 report queue 32 128 进入离线缓存 rs485 tx queue 16 32 关键帧不丢，普通帧可丢 log queue 64 256 debug 可丢，error 尽量保留 lpm queue 16 32 不建议丢，重复事件可合并 ota queue 1 2 OTA 忙则拒绝 ftp queue 1 4 FTP 忙则拒绝 9. 核心结构体设计 9.1 系统事件结构 typedef enum { APP EVT NONE = 0, APP EVT BOOT DONE, APP EVT NET READY, APP EVT NET LOST, APP EVT RS485 FRAME READY, APP EVT RS485 ACK TIMEOUT, APP EVT CLOUD CMD READY, APP EVT BLE CMD READY, APP EVT VEH LOCKED, APP EVT VEH UNLOCKED, APP EVT VEH STATE CHANGED, APP EVT LPM SLEEP REQ, APP EVT LPM WAKEUP REQ, APP EVT OTA DONE, APP EVT OTA FAIL, APP EVT ERROR, } app evt id t; typedef enum { APP SRC NONE = 0, APP SRC RS485, APP SRC CLOUD, APP SRC BLE, APP SRC LPM, APP SRC OTA, APP SRC FTP, APP SRC TIMER, } app src t; typedef struct { app evt id t id; app src t src; uint16 t len; uint32 t tick; uint32 t trace id; void data; } app event t; 9.2 命令上下文结构 typedef enum { CMD SRC CLOUD = 0, CMD SRC BLE, CMD SRC NFC, CMD SRC RS485, CMD SRC LOCAL, CMD SRC FACTORY, } cmd src t; typedef enum { CMD ACK NONE = 0, CMD ACK LOCAL ONLY, CMD ACK WAIT RS485, CMD ACK WAIT CLOUD, CMD ACK WAIT BOTH, } cmd ack policy t; typedef enum { CMD RESULT NONE = 0, CMD RESULT OK, CMD RESULT BUSY, CMD RESULT PARAM ERR, CMD RESULT TIMEOUT, CMD RESULT EXEC FAIL, CMD RESULT ACK FAIL, CMD RESULT REPORT FAIL, } cmd result t; typedef struct { uint32 t trace id; uint32 t cmd id; cmd src t src; cmd ack policy t ack policy; uint32 t start tick; uint32 t timeout ms; uint8 t retry count; uint8 t retry max; void param; uint16 t param len; cmd result t result; } cmd context t; 10. app router task 设计 10.1 职责 app router task 只做三件事： 1. 接收系统事件 2. 根据事件类型转发到目标任务 3. 记录 trace/log 10.2 禁止做的事 不解析复杂协议 不执行命令 不等待 ACK 不写配置 不直接改 vehicle state 不直接调用 sleep/wakeup 不直接 publish 云端事件 10.3 示例 static void app router dispatch const app event t evt { switch evt id { case APP EVT CLOUD CMD READY: cmd exec post cmd context t evt data ; break; case APP EVT RS485 FRAME READY: rs485 proto post evt data, evt len ; break; case APP EVT VEH STATE CHANGED: vehicle post event evt data, evt len ; break; case APP EVT LPM SLEEP REQ: case APP EVT LPM WAKEUP REQ: lpm post event evt ; break; default: break; } } 11. 命令执行状态机 11.1 状态定义 typedef enum { CMD ST IDLE = 0, CMD ST DEQUEUE, CMD ST VALIDATE, CMD ST LOCAL PREPARE, CMD ST SEND TO DEVICE, CMD ST WAIT ACK, CMD ST APPLY STATE, CMD ST REPORT RESULT, CMD ST DONE, CMD ST FAIL, CMD ST ROLLBACK, } cmd exec state t; 11.2 命令执行链路 收到命令 ↓ 参数校验 ↓ 权限/状态检查 ↓ 本地准备 ↓ 下发到 RS485 / BLE / 本地模块 ↓ 等待 ACK ↓ 更新业务状态 ↓ 触发上报 ↓ 记录结果 11.3 ACK 等待建议 不建议在 cmd exec task 中长时间阻塞： send rs485 cmd ; wait ack forever ; 推荐方式： cmd exec task 发送命令 ↓ 设置 pending cmd ↓ 启动 timeout timer ↓ 任务继续等待队列 ↓ RS485 ACK 到达后投递 ACK 事件 ↓ cmd exec task 根据 trace id / cmd id 匹配 ACK 优点： 1. cmd exec task 不会卡死 2. 可以同时处理其他事件 3. 方便超时和重试 4. 方便记录状态流转 12. RS485 服务设计 12.1 接收链路 UART ISR / DMA IDLE ↓ 释放信号量 / 设置事件 ↓ rs485 task ↓ 从 ring buffer 取数据 ↓ 流式解析 ↓ 帧校验 ↓ 生成 RS485 协议事件 ↓ 投递到 event queue / cmd exec task / vehicle app 12.2 ISR 中不要做 不解析复杂协议 不 malloc 不写文件 不上报云端 不跑业务状态机 不长时间 printf 13. 上报任务设计 13.1 上报状态机 REPORT ST IDLE ↓ REPORT ST BUILD ↓ REPORT ST WAIT NET ↓ REPORT ST PUBLISH ↓ REPORT ST WAIT CONFIRM ↓ REPORT ST DONE 失败路径： 网络未就绪 → 离线缓存 publish 失败 → 离线缓存或重试 云端未确认 → 根据策略重试 缓存失败 → 记录错误 13.2 上报分层 必须区分： 生成事件成功 进入 report queue 成功 MQTT publish 调用成功 SDK 返回成功 云端确认成功 离线缓存成功 补发成功 14. 低功耗任务设计 14.1 原则 低功耗不能由业务模块直接调用系统 sleep/wakeup。 禁止： if lock { bst sleep ; } 推荐： lpm request sleep LPM SRC VEH LOCK ; lpm request wakeup LPM SRC CLOUD CMD ; 只有 lpm task 可以真正调用系统休眠/唤醒接口。 14.2 LPM 状态机 typedef enum { LPM ST ACTIVE = 0, LPM ST IDLE CHECK, LPM ST SLEEP PENDING, LPM ST PREPARE SLEEP, LPM ST SLEEPING, LPM ST WAKEUP PENDING, LPM ST RECOVERING, LPM ST ERROR, } lpm state t; 14.3 LPM lock bit typedef enum { LPM LOCK NONE = 0, LPM LOCK BLE = 1 << 0, LPM LOCK CLOUD = 1 << 1, LPM LOCK RS485 = 1 << 2, LPM LOCK REPORT = 1 << 3, LPM LOCK OTA = 1 << 4, LPM LOCK FTP = 1 << 5, LPM LOCK FACTORY = 1 << 6, LPM LOCK DIAG = 1 << 7, } lpm lock bits t; 14.4 是否允许休眠 不能只看 lock bits，还要看： 关键队列是否为空 是否存在 ACK WAIT 是否存在 report pending 是否存在 file write pending 是否处于 OTA / FTP 是否处于 factory / diag 网络是否正在关键事务 RS485 是否正在发送 示例： static int lpm can sleep lpm reason t block reason { if g lpm.lock bits != 0 { block reason = LPM BLOCK LOCK BITS; return 0; } if !cmd exec is idle { block reason = LPM BLOCK CMD BUSY; return 0; } if !report is idle { block reason = LPM BLOCK REPORT PENDING; return 0; } if !rs485 is idle { block reason = LPM BLOCK RS485 BUSY; return 0; } if !storage is idle { block reason = LPM BLOCK STORAGE BUSY; return 0; } return 1; } 14.5 低功耗链路分层 涉及低功耗、唤醒、命令执行、ACK 和上报时，必须区分： 系统休眠/唤醒状态 ↓ 外设/仪表/模块唤醒动作 ↓ 总线使能状态 ↓ 命令接收链路 ↓ 命令解析链路 ↓ 本地执行链路 ↓ ACK/反馈确认链路 ↓ 事件上报链路 ↓ 属性回云链路 ↓ 云端确认链路 不要把 GPIO 电平变化、WAKEUP OUT、外设唤醒动作直接等价为系统已经退出低功耗。 15. 日志和可观测性设计 15.1 trace id 贯穿全链路 一条云端开锁命令，建议日志能看到： trace=1001 CLOUD recv cmd=0x21000004 msgId=xxx trace=1001 CMD state=VALIDATE ret=0 trace=1001 CMD state=SEND RS485 ret=0 trace=1001 CMD state=WAIT ACK ret=0 cost=120ms trace=1001 VEH lock state=UNLOCKED src=CLOUD trace=1001 REPORT event=102 enqueue ret=0 trace=1001 MQTT publish ret=0 这样出现问题时，可以判断失败停在哪一层。 15.2 队列统计 typedef struct { uint32 t send cnt; uint32 t recv cnt; uint32 t full cnt; uint32 t drop cnt; uint32 t high water; } queue stat t; 每个关键队列都建议有统计： event queue cmd queue report queue rs485 tx queue log queue lpm queue 15.3 任务统计 typedef struct { uint32 t last alive tick; uint32 t loop cnt; uint32 t err cnt; uint32 t max cost ms; uint32 t stack min free; } task stat t; monitor task 周期性检查： 任务是否还活着 任务栈是否够用 队列是否接近满 状态机是否卡住 最近一次错误是什么 最近一次活动时间是什么 16. 日志任务设计 16.1 原则 高优先级任务不能等待日志落盘 debug 日志可以丢 error 日志尽量保留 文件写失败不能影响核心业务 日志队列满必须计数 16.2 日志分级 级别 满队列策略 ERROR 尽量保留 WARN 尽量保留 INFO 可丢 DEBUG 优先丢 17. 存储访问设计 如果多个任务都直接访问文件系统，容易出现： 文件系统重入问题 打开文件过多 写入阻塞 断电一致性差 路径冲突 空间不足处理分散 推荐规则： 文件类型 owner 说明 日志文件 log task 只允许 log task 写 配置文件 cfg svc 提供同步 API 或队列 API OTA 文件 ota task OTA 流程独占 离线事件 report task report task 统一管理 FTP 读取 ftp task 只读日志，不直接改日志文件 18. 推荐目录结构 project/ ├── app/ │ ├── app router.c │ ├── app router.h │ ├── cmd app.c │ ├── cmd app.h │ ├── vehicle app.c │ ├── vehicle app.h │ ├── report app.c │ ├── report app.h │ ├── lpm app.c │ └── lpm app.h │ ├── services/ │ ├── rs485 svc.c │ ├── rs485 svc.h │ ├── cloud svc.c │ ├── cloud svc.h │ ├── ble svc.c │ ├── ble svc.h │ ├── storage svc.c │ ├── storage svc.h │ ├── log svc.c │ └── log svc.h │ ├── framework/ │ ├── fw event.c │ ├── fw event.h │ ├── fw cmd.c │ ├── fw cmd.h │ ├── fw queue.c │ ├── fw queue.h │ ├── fw timer.c │ ├── fw timer.h │ ├── fw mem pool.c │ ├── fw mem pool.h │ ├── fw trace.c │ ├── fw trace.h │ ├── fw monitor.c │ └── fw monitor.h │ ├── drivers/ │ ├── drv uart.c │ ├── drv gpio.c │ ├── drv rs485.c │ ├── drv spi nand.c │ └── drv wdg.c │ ├── config/ │ ├── task config.h │ ├── queue config.h │ ├── feature config.h │ └── app config.h │ └── main/ ├── main.c ├── boot mgr.c └── boot mgr.h 19. 启动流程设计 main ↓ RTOS kernel start ↓ boot task ↓ board init ↓ driver init ↓ storage init ↓ framework init ↓ queue create ↓ mem pool create ↓ service init ↓ app init ↓ task create ↓ APP EVT BOOT DONE 示例： void boot task entry ULONG arg { board init ; drv uart init ; drv gpio init ; drv rs485 init ; storage svc init ; cfg svc init ; fw event init ; fw cmd init ; fw mem pool init ; fw trace init ; fw monitor init ; rs485 svc init ; cloud svc init ; ble svc init ; log svc init ; vehicle app init ; cmd app init ; report app init ; lpm app init ; app tasks create ; app event post simple APP EVT BOOT DONE, APP SRC NONE ; } 20. 优先级设计建议 分组 任务 说明 高优先级 rs485 rx task / monitor task 实时输入、系统健康 中高优先级 app router task / cmd exec task / lpm task 核心控制链路 中优先级 cloud task / ble task / vehicle task 通信和业务状态 中低优先级 report task / rs485 tx task 输出和上报 低优先级 log task / ftp task / ota task 后台耗时任务 原则： 高优先级任务不能写文件 高优先级任务不能等待网络 高优先级任务不能做大 JSON 解析 高优先级任务不能长时间持锁 低优先级任务必须可被打断 所有任务等待都要有超时 21. 最小落地路线 21.1 V1.0：先跑通核心闭环 实现： app event t cmd context t app router task cmd exec task report task lpm task log task monitor task trace id queue stat 目标： 输入源能进事件队列 命令能进入 cmd exec task 上报统一走 report task 低功耗统一走 lpm task 日志统一走 log task 队列满有统计 任务状态可监控 21.2 V1.5：收敛所有权 目标： 消灭多个任务直接修改全局状态 重点： vehicle state 归 vehicle app / vehicle task rs485 tx 归 rs485 tx task report 归 report task lpm state 归 lpm task log file 归 log task 21.3 V2.0：事务化和可观测 目标： 命令可追踪 失败可定位 异常可恢复 重点： cmd context t trace id cmd state machine report state machine lpm state machine queue stat task stat offline report cache 21.4 V3.0：组件化和产品化 目标： 适配多个项目 重点： feature config 模块裁剪 平台适配层 统一接口 单元测试 故障注入测试 22. 架构验收标准 22.1 功能验收 验收项 通过标准 云端命令 能完整追踪接收、解析、执行、ACK、上报 RS485 接收 高负载下不丢关键帧 上报 网络断开后可缓存，恢复后补发 OTA 下载、校验、写入、重启、上报分层明确 FTP 上传失败可重试，不阻塞核心业务 日志 不影响高优先级任务 LPM 所有 sleep/wakeup 经过 lpm task 队列满 有日志、有计数、有降级策略 22.2 调试验收 系统必须能回答： 这个事件是谁发的？ 哪个任务处理了？ 当前状态是什么？ 失败停在哪一层？ 队列有没有满？ 任务有没有卡死？ 栈有没有不够？ 是否进入低功耗？ 是系统醒了，还是外设醒了？ 命令是收到成功，还是执行成功？ ACK 成功后有没有上报？ 上报后云端有没有确认？ 23. 架构风险与取舍 23.1 风险一：过度架构 不要第一版就实现： 复杂事件订阅系统 动态模块注册 复杂插件框架 完整 buffer 引用计数 完整诊断框架 建议： 先做最小闭环，再按压力点扩展。 23.2 风险二：owner 规则没有落地 如果代码里仍然大量存在： extern vehicle state t g vehicle state; extern uint8 t g lpm state; extern int rs485 send directly ... ; 那么架构会很快失效。 建议： 全局状态尽量 static 只暴露 getter / post event / request API 禁止跨模块直接写状态 23.3 风险三：任务优先级不合理 高优先级任务做了文件写入、网络等待、大 JSON 解析，会导致实时性问题。 建议： 高优先级任务只做短路径处理 耗时操作全部转给低优先级 worker 所有阻塞都必须有 timeout 23.4 风险四：低功耗误判 低功耗不能只看： lock state BLE connected WAKEUP OUT KL15 还要看： 系统是否真的醒 外设是否醒 总线是否可用 是否有命令待执行 是否有 ACK 待确认 是否有上报待完成 是否有文件写入待完成 24. 最终推荐版本 24.1 核心任务 1. boot task 2. app router task 3. rs485 task 4. cloud task 5. cmd exec task 6. report task 7. lpm task 8. log task 9. monitor task 24.2 按需扩展任务 10. ble task 11. vehicle task 12. ota task 13. ftp task 14. factory task 15. diag task 16. shell task 24.3 核心机制 event queue cmd queue report queue rs485 tx queue log queue lpm queue trace id cmd context t cmd state machine report state machine lpm state machine queue stat task stat owner 规则 25. 一句话总结 一个优秀的 RTOS 多任务框架，最关键的不是任务数量，而是系统边界： 减任务、强 owner、加 trace、分层成功、统一仲裁、持续监控。 做到这几点，系统才不会随着业务增长变成一堆任务、flag、全局变量和不可追踪的回调，而是可以持续演进、持续定位、持续维护。"
+    },
+    {
+      "slug": "rtos-task-design",
+      "title": "RTOS 多任务设计：事件、队列、状态机如何分层",
+      "date": "2026-05-27",
+      "updated": "2026-05-27",
+      "category": "嵌入式架构",
+      "series": "rtos",
+      "quality": "架构",
+      "tags": [
+        "RTOS",
+        "ThreadX",
+        "状态机"
+      ],
+      "summary": "从输入源、实时性、阻塞点、共享资源四个维度，拆解一个稳定 RTOS 业务框架的设计方法。",
+      "url": "#/posts/rtos-task-design",
+      "text": "结论 RTOS 多任务设计的核心不是任务越多越好，而是先识别输入源、实时性、阻塞点和共享资源，再决定任务、事件、队列、状态机的边界。 设计框架 事件负责通知，队列负责传数据，状态机负责阶段切换，任务负责承载执行上下文。不要用队列传递一切，也不要让多个任务随意改同一个全局状态。 最小落地 新项目先画输入源清单，再标出哪些逻辑必须实时响应，哪些逻辑可以排队处理，哪些资源存在并发访问风险。最后再决定任务数量和优先级。 验证方法 用日志记录事件进入、队列入队、状态切换、任务处理耗时和异常分支。通过这些点验证系统是否出现队列堆积、事件丢失、状态跳变或优先级设计错误。"
+    },
+    {
+      "slug": "source-reading-method",
+      "title": "源码阅读方法：先抓结构体，再看谁赋值、谁读取",
+      "date": "2026-05-12",
+      "updated": "2026-05-12",
+      "category": "学习方法",
+      "series": "growth",
+      "quality": "方法",
+      "tags": [
+        "源码阅读",
+        "工程能力",
+        "方法论"
+      ],
+      "summary": "读源码不要只看接口名，先找核心结构体和调用链，再结合日志验证真实语义。",
+      "url": "#/posts/source-reading-method",
+      "text": "结论 变量名、函数名、状态名只能作为线索，不能直接当真实语义。真正可靠的是谁初始化、谁赋值、谁读取、在哪条调用链生效。 阅读顺序 先找核心结构体，再看初始化函数，然后看写入点、读取点、状态切换点、错误处理点和日志输出点。 工程意义 这种方法能避免只看接口名就下结论，尤其适合 RTOS、驱动框架、协议栈、低功耗状态机这类跨模块代码。 验证方法 用 grep/全局搜索追踪字段读写，再结合断点、日志、运行状态去确认推断是否成立。"
+    },
+    {
+      "slug": "tbox-low-power-chain",
+      "title": "TBOX 低功耗链路复盘：唤醒信号不等于系统唤醒",
+      "date": "2026-05-22",
+      "updated": "2026-05-27",
+      "category": "TBOX 实战",
+      "series": "tbox",
+      "quality": "复盘",
+      "tags": [
+        "TBOX",
+        "低功耗",
+        "WAKEUP_OUT"
+      ],
+      "summary": "把系统休眠、外设唤醒、总线使能、协议执行、云端上报拆成独立链路，避免误判。",
+      "url": "#/posts/tbox-low-power-chain",
+      "text": "结论 WAKEUP OUT 只能说明外设侧被拉醒或保持，不能直接证明主系统已经退出低功耗。系统状态、模块状态、总线状态和云端上报状态必须分开验证。 分层链路 低功耗问题建议拆成：系统休眠/唤醒、外设/模块唤醒、总线使能、命令接收、协议解析、本地执行、ACK 反馈、事件上报、属性回云、云端确认。 常见误判 发出请求不等于执行成功，收到命令不等于状态生效，ACK 成功不等于事件上报成功，上报成功也不等于云端确认成功。 验证方法 优先插桩系统低功耗状态变量、WAKEUP OUT 控制点、RS485 报文收发点、云端事件上报返回值和离线缓存补发路径。"
+    },
+    {
+      "slug": "uart-dma-idle-parser",
+      "title": "UART DMA + IDLE 接收：为什么协议层还需要流式解析",
+      "date": "2026-05-18",
+      "updated": "2026-05-18",
+      "category": "驱动开发",
+      "series": "driver",
+      "quality": "源码",
+      "tags": [
+        "UART",
+        "DMA",
+        "协议解析"
+      ],
+      "summary": "DMA/IDLE 只负责搬运字节，不负责保证一帧完整。协议层必须处理半包、粘包、错包。",
+      "url": "#/posts/uart-dma-idle-parser",
+      "text": "结论 DMA 空闲中断只能说明一段时间内没有新字节到达，不能保证本次收到的数据就是完整协议帧。协议层仍然需要流式状态机。 驱动边界 驱动层负责收字节、搬运缓存、触发通知；协议层负责固定头识别、长度校验、CRC 校验、半包缓存、粘包拆分和异常恢复。 推荐结构 验证方法 用测试数据覆盖正常帧、半包、粘包、错头、错长度、错 CRC、超长帧和连续高频帧。"
+    }
+  ]
+}
